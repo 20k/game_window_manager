@@ -72,6 +72,7 @@ struct process_manager
     std::vector<proc_info> processes;
     int imgui_current_item = 0;
     bool should_quit = false;
+    bool only_show_windowed = true;
 
     int dwidth = 0;
     int dheight = 0;
@@ -229,13 +230,14 @@ struct process_manager
 
         ImGui::Begin("Togglefun", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar);
 
+
         ///yeah this is pretty crap
         ///but ImGui is a C API so
         std::vector<const char*> names;
 
         for(auto& i : processes)
         {
-            if(!is_windowed(i.process_name))
+            if(!is_windowed(i.process_name) && only_show_windowed)
                continue;
 
             names.push_back(i.process_name.c_str());
@@ -250,7 +252,12 @@ struct process_manager
         if(names.size() > 0)
         {
             ImGui::ListBox("###Window", &imgui_current_item, &names[0], names.size());
+        }
 
+        ImGui::Checkbox("Only Show Windowed Applications", &only_show_windowed);
+
+        if(names.size() > 0)
+        {
             if(ImGui::Button("Make Borderless"))
             {
                 set_borderless(names[imgui_current_item], false);

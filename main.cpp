@@ -7,6 +7,9 @@
 #include <bitset>
 #include <iostream>
 
+#include <SFML/Graphics.hpp>
+#include <imgui/imgui.h>
+
 struct proc_info
 {
     std::string process_name = "Error";
@@ -149,19 +152,13 @@ struct process_manager
 
 int main()
 {
-    {
-        process_manager process_manage;
-        process_manage.dump();
+    process_manager process_manage;
 
-        process_manage.set_borderless("crapmud_client.exe");
-    }
+    process_manage.set_borderless("crapmud_client.exe");
 
     Sleep(1000);
 
-    {
-        process_manager process_manage;
-        process_manage.set_bordered("crapmud_client.exe");
-    }
+    process_manage.set_bordered("crapmud_client.exe");
 
     return 0;
 }

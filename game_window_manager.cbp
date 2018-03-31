@@ -32,7 +32,15 @@
 			<Add option="-Wall" />
 			<Add option="-fexceptions" />
 		</Compiler>
+		<Linker>
+			<Add option="-lpsapi" />
+			<Add option="-lsfml-system" />
+			<Add option="-lsfml-window" />
+			<Add option="-lsfml-graphics" />
+			<Add option="-limgui" />
+		</Linker>
 		<Unit filename="main.cpp" />
+		<Unit filename="winapi_interop.hpp" />
 		<Extensions>
 			<code_completion />
 			<envvars />

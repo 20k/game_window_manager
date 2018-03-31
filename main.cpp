@@ -67,6 +67,7 @@ struct process_manager
 {
     std::vector<proc_info> processes;
     int imgui_current_item = 0;
+    bool should_quit = false;
 
     process_manager()
     {
@@ -210,6 +211,8 @@ struct process_manager
 
     void draw_window()
     {
+        ImGui::SetNextWindowPos(ImVec2(0, 0));
+
         ImGui::Begin("Togglefun", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar);
 
         ///yeah this is pretty crap
@@ -238,7 +241,7 @@ struct process_manager
                 set_bordered(names[imgui_current_item]);
             }
 
-            if(ImGui::Button("Make Borderless and set to top left (recommended)"))
+            if(ImGui::Button("Make Borderless, set to top left (recommended)"))
             {
                 set_borderless(names[imgui_current_item], true);
             }
@@ -248,15 +251,20 @@ struct process_manager
                 set_fullscreen(names[imgui_current_item], true);
             }
 
-            if(ImGui::Button("Make Not Fullscreen (broken)"))
+            /*if(ImGui::Button("Make Not Fullscreen (broken)"))
             {
                 set_fullscreen(names[imgui_current_item], false);
-            }
+            }*/
         }
 
         if(ImGui::Button("Refresh"))
         {
             refresh();
+        }
+
+        if(ImGui::Button("Quit"))
+        {
+            should_quit = true;
         }
 
         ImGui::End();
@@ -280,6 +288,7 @@ int main()
 
     window.create(sf::VideoMode(350, 350),"Wowee", sf::Style::Default, settings);
     window.setVerticalSyncEnabled(true);
+    window.setFramerateLimit(60);
 
     ImGui::SFML::Init(window);
 
@@ -320,11 +329,13 @@ int main()
             if(event.type == sf::Event::GainedFocus)
             {
                 focused = true;
+                window.setFramerateLimit(60);
             }
 
             if(event.type == sf::Event::LostFocus)
             {
                 focused = false;
+                window.setFramerateLimit(5);
             }
         }
 
@@ -337,11 +348,16 @@ int main()
 
         process_manage.draw_window();
 
+        if(process_manage.should_quit)
+            going = false;
+
         ImGui::Render();
         window.display();
         window.clear();
 
         ImGui::SFML::Update(ui_clock.restart());
+
+        sf::sleep(sf::milliseconds(4));
     }
 
     return 0;

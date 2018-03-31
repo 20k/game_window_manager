@@ -16,6 +16,7 @@ struct proc_info
     std::string process_name = "Error";
     HWND handle = 0;
     HANDLE hProcess = 0;
+    WINDOWPLACEMENT g_wpPrev = { sizeof(g_wpPrev) };
 
     bool valid()
     {
@@ -147,6 +148,45 @@ struct process_manager
         info.dump_styles();
     }
 
+    void set_fullscreen(const std::string& name, bool state)
+    {
+        proc_info info = fetch_by_name(name);
+
+        if(!info.valid())
+        {
+            printf("Invalid window\n");
+            return;
+        }
+
+        auto style = info.get_style();
+
+        if(state && (style & WS_OVERLAPPEDWINDOW))
+        {
+            MONITORINFO mi = { sizeof(mi) };
+            if (GetWindowPlacement(info.handle, &info.g_wpPrev) &&
+                GetMonitorInfo(MonitorFromWindow(info.handle,
+                               MONITOR_DEFAULTTOPRIMARY), &mi)) {
+              SetWindowLong(info.handle, GWL_STYLE,
+                            style & ~WS_OVERLAPPEDWINDOW);
+              SetWindowPos(info.handle, HWND_TOP,
+                           mi.rcMonitor.left, mi.rcMonitor.top,
+                           mi.rcMonitor.right - mi.rcMonitor.left,
+                           mi.rcMonitor.bottom - mi.rcMonitor.top,
+                           SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
+            }
+        }
+
+        if(!state && !(style & WS_OVERLAPPEDWINDOW))
+        {
+            SetWindowLong(info.handle, GWL_STYLE,
+                  style | WS_OVERLAPPEDWINDOW);
+            SetWindowPlacement(info.handle, &info.g_wpPrev);
+            SetWindowPos(info.handle, NULL, 0, 0, 0, 0,
+                         SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER |
+                         SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
+        }
+    }
+
     void draw_window()
     {
         ImGui::Begin("Togglefun", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
@@ -173,6 +213,16 @@ struct process_manager
             {
                 set_bordered(processes[imgui_current_item].process_name);
             }
+
+            if(ImGui::Button("Make Fullscreen"))
+            {
+                set_fullscreen(processes[imgui_current_item].process_name, true);
+            }
+
+            /*if(ImGui::Button("Make Not Fullscreen"))
+            {
+                set_fullscreen(processes[imgui_current_item].process_name, false);
+            }*/
         }
 
         ImGui::End();

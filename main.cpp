@@ -69,10 +69,18 @@ struct proc_info
 
 struct process_manager
 {
+    std::string last_managed_window = "";
+
     std::vector<proc_info> processes;
     int imgui_current_item = 0;
+
     bool should_quit = false;
     bool only_show_windowed = true;
+    bool use_mouse_lock = true;
+
+    bool lock_mouse_to_window = false;
+
+    bool locking_success = false;
 
     int dwidth = 0;
     int dheight = 0;
@@ -87,9 +95,21 @@ struct process_manager
         dheight = desk_dim.height;
     }
 
+    void toggle_mouse_lock()
+    {
+        lock_mouse_to_window = !lock_mouse_to_window;
+    }
+
     void refresh()
     {
-        *this = process_manager();
+        cleanup();
+
+        processes = get_process_infos();
+
+        auto desk_dim = sf::VideoMode::getDesktopMode();
+
+        dwidth = desk_dim.width;
+        dheight = desk_dim.height;
     }
 
     proc_info fetch_by_name(const std::string& name)
@@ -184,44 +204,37 @@ struct process_manager
         return ((style & WS_CAPTION) > 0);
     }
 
-    void set_fullscreen(const std::string& name, bool state)
+    void handle_mouse_lock()
     {
-        proc_info info = fetch_by_name(name);
+        ///below logic can be used to lock the mouse to a specific application
+        ///currently using global locking until we have profiles
+        /*proc_info info = fetch_by_name(last_managed_window);
 
-        if(!info.valid())
+        if(!lock_mouse_to_window || last_managed_window == "" || !info.valid())
         {
-            printf("Invalid window\n");
+            ClipCursor(nullptr);
             return;
         }
 
-        auto style = info.get_style();
+        RECT wrect;
 
-        if(state && (style & WS_OVERLAPPEDWINDOW))
+        GetWindowRect(info.handle, &wrect);
+
+        ClipCursor(&wrect);*/
+
+        if(!lock_mouse_to_window)
         {
-            MONITORINFO mi = { sizeof(mi) };
-            if (GetWindowPlacement(info.handle, &info.g_wpPrev) &&
-                GetMonitorInfo(MonitorFromWindow(info.handle,
-                               MONITOR_DEFAULTTOPRIMARY), &mi)) {
-              SetWindowLong(info.handle, GWL_STYLE,
-                            style & ~WS_OVERLAPPEDWINDOW);
-              SetWindowPos(info.handle, HWND_TOP,
-                           mi.rcMonitor.left, mi.rcMonitor.top,
-                           mi.rcMonitor.right - mi.rcMonitor.left,
-                           mi.rcMonitor.bottom - mi.rcMonitor.top,
-                           SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
-            }
+            ClipCursor(nullptr);
+            return;
         }
 
-        ///broken, unused
-        if(!state && !(style & WS_OVERLAPPEDWINDOW))
-        {
-            SetWindowLong(info.handle, GWL_STYLE,
-                  style | WS_OVERLAPPEDWINDOW);
-            SetWindowPlacement(info.handle, &info.g_wpPrev);
-            SetWindowPos(info.handle, NULL, 0, 0, 0, 0,
-                         SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER |
-                         SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
-        }
+        HWND hwnd = GetForegroundWindow();
+
+        RECT wrect;
+
+        GetWindowRect(hwnd, &wrect);
+
+        ClipCursor(&wrect);
     }
 
     void draw_window()
@@ -256,21 +269,29 @@ struct process_manager
 
         ImGui::Checkbox("Only Show Windowed Applications", &only_show_windowed);
 
+        ImGui::Checkbox("Use End to lock mouse to window", &use_mouse_lock);
+
         if(names.size() > 0)
         {
             if(ImGui::Button("Make Borderless"))
             {
                 set_borderless(names[imgui_current_item], false);
+
+                last_managed_window = names[imgui_current_item];
             }
 
             if(ImGui::Button("Make Windowed"))
             {
                 set_bordered(names[imgui_current_item]);
+
+                last_managed_window = names[imgui_current_item];
             }
 
             if(ImGui::Button("Make Borderless, set to top left (recommended)"))
             {
                 set_borderless(names[imgui_current_item], true);
+
+                last_managed_window = names[imgui_current_item];
             }
 
             if(ImGui::Button("Make Borderless Auto"))
@@ -286,20 +307,12 @@ struct process_manager
 
                 set_borderless(names[imgui_current_item], move_to_tl);
 
+                last_managed_window = names[imgui_current_item];
+
                 /*proc_info new_info = process_id_to_proc_info(info.processID);
                 bool move_to_tl = new_info.w == dwidth && new_info.h == dheight;
                 printf("%i %i %i %i\n", new_info.w, dwidth, new_info.h, dheight);*/
             }
-
-            if(ImGui::Button("Make Fullscreen (not recommended)"))
-            {
-                set_fullscreen(names[imgui_current_item], true);
-            }
-
-            /*if(ImGui::Button("Make Not Fullscreen (broken)"))
-            {
-                set_fullscreen(names[imgui_current_item], false);
-            }*/
         }
 
         if(ImGui::Button("Refresh"))
@@ -315,13 +328,18 @@ struct process_manager
         ImGui::End();
     }
 
-    ~process_manager()
+    void cleanup()
     {
         for(proc_info& info : processes)
         {
             CloseHandle(info.handle);
             CloseHandle(info.hProcess);
         }
+    }
+
+    ~process_manager()
+    {
+        cleanup();
     }
 };
 
@@ -346,6 +364,9 @@ int main()
     style.ChildWindowRounding = 2;
 
     process_manager process_manage;
+
+    sf::Keyboard key;
+    bool toggled_key = false;
 
     sf::Clock ui_clock;
 
@@ -391,6 +412,18 @@ int main()
             //process_manage.refresh();
         }
 
+        if(!key.isKeyPressed(sf::Keyboard::End))
+            toggled_key = false;
+
+        if(key.isKeyPressed(sf::Keyboard::End) && !toggled_key && process_manage.use_mouse_lock)
+        {
+            toggled_key = true;
+
+            process_manage.refresh();
+            process_manage.toggle_mouse_lock();
+        }
+
+        process_manage.handle_mouse_lock();
         process_manage.draw_window();
 
         if(process_manage.should_quit)

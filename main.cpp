@@ -51,12 +51,12 @@ struct proc_info
         SetWindowLongPtr(handle, GWL_EXSTYLE, dat);
     }
 
-    void refresh(bool should_move = false)
+    void refresh(bool should_move = false, int move_x = 0, int move_y = 0)
     {
         if(!should_move)
             SetWindowPos(handle, NULL, 0,0,0,0, SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOOWNERZORDER);
         else
-            SetWindowPos(handle, NULL, 0,0,0,0, SWP_FRAMECHANGED | SWP_NOSIZE | SWP_NOZORDER | SWP_NOOWNERZORDER);
+            SetWindowPos(handle, NULL, move_x, move_y, 0,0, SWP_FRAMECHANGED | SWP_NOSIZE | SWP_NOZORDER | SWP_NOOWNERZORDER);
     }
 
     void dump_styles()
@@ -66,6 +66,13 @@ struct proc_info
 
         std::cout << "b1 " << b1 << std::endl;
         std::cout << "b2 " << b2 << std::endl;
+    }
+
+    void lock_mouse_to()
+    {
+        RECT wrect;
+        GetWindowRect(handle, &wrect);
+        ClipCursor(&wrect);
     }
 };
 
@@ -124,6 +131,31 @@ struct process_manager : serialisable
         lock_mouse_to_window = !lock_mouse_to_window;
     }
 
+    void apply_profile(application_profile& prof, proc_info& proc)
+    {
+        if(prof.applied)
+            return;
+
+        if(!prof.enabled)
+            return;
+
+        prof.applied = true;
+
+        if(prof.auto_lock_mouse)
+        {
+            proc.lock_mouse_to();
+
+            lock_mouse_to_window = true;
+        }
+
+        if(prof.auto_borderless)
+        {
+            set_borderless(proc.process_name, prof.should_move_application, prof.application_x, prof.application_y);
+        }
+
+        printf("applied profile\n");
+    }
+
     void refresh()
     {
         cleanup();
@@ -134,6 +166,22 @@ struct process_manager : serialisable
 
         dwidth = desk_dim.width;
         dheight = desk_dim.height;
+
+        ///we need to go through all the profiles afterwards and set applied to false for any
+        ///processes that don't exist, so that we'll apply this to a process on a relaunch
+        for(proc_info& proc : processes)
+        {
+            std::optional opt_profile = fetch_profile_by_name(proc.process_name);
+
+            if(!opt_profile.has_value())
+                continue;
+
+            std::cout << "hello prof " << proc.process_name << std::endl;
+
+            auto ref_profile = *opt_profile;
+
+            apply_profile(ref_profile.get(), proc);
+        }
     }
 
     proc_info fetch_by_name(const std::string& name)
@@ -155,7 +203,7 @@ struct process_manager : serialisable
         }
     }
 
-    void set_borderless(const std::string& name, bool should_move)
+    void set_borderless(const std::string& name, bool should_move, int move_w = 0, int move_h = 0)
     {
         proc_info info = fetch_by_name(name);
 
@@ -513,11 +561,12 @@ int main()
 
             process_manage.refresh();
             process_manage.toggle_mouse_lock();
+            process_manage.handle_mouse_lock();
         }
 
         int desired_w = 0;
 
-        process_manage.handle_mouse_lock();
+        //process_manage.handle_mouse_lock();
         process_manage.draw_window(desired_w);
 
         if(desired_w > 100 && abs(desired_w - (int)window.getSize().x) > 10)

@@ -5,12 +5,16 @@
 
 struct application_profile : serialisable
 {
+    ///not persisted. purely for bookkeeping
+    bool applied = false;
+
     std::string name;
 
     bool auto_lock_mouse = false;
     bool auto_borderless = false;
     float init_delay_s = 1.f;
 
+    bool should_move_application = false;
     int application_x = 0;
     int application_y = 0;
 
@@ -24,6 +28,7 @@ struct application_profile : serialisable
         s.handle_serialise(auto_borderless, ser);
         s.handle_serialise(init_delay_s, ser);
 
+        s.handle_serialise(should_move_application, ser);
         s.handle_serialise(application_x, ser);
         s.handle_serialise(application_y, ser);
 
@@ -37,8 +42,13 @@ struct application_profile : serialisable
         ImGui::Checkbox("Auto Confine mouse", &auto_lock_mouse);
         ImGui::Checkbox("Auto borderless", &auto_borderless);
 
-        ImGui::InputInt("Start x", &application_x, 1, 100);
-        ImGui::InputInt("Start y", &application_y, 1, 100);
+        ImGui::Checkbox("Move Window?", &should_move_application);
+
+        if(should_move_application)
+        {
+            ImGui::InputInt("Start x", &application_x, 1, 100);
+            ImGui::InputInt("Start y", &application_y, 1, 100);
+        }
 
         ImGui::Checkbox("Enabled", &enabled);
     }

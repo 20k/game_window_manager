@@ -6,12 +6,14 @@
 #include <string>
 #include <bitset>
 #include <iostream>
+#include <functional>
 
 #include <SFML/Graphics.hpp>
 #include <imgui/imgui.h>
 #include <imgui/imgui-SFML.h>
 
 #include <funserialisation/serialise.hpp>
+#include "application_profile.hpp"
 
 struct proc_info
 {
@@ -73,6 +75,8 @@ struct process_manager : serialisable
 {
     std::string last_managed_window = "";
 
+    std::vector<application_profile> profiles;
+
     std::vector<proc_info> processes;
     int imgui_current_item = 0;
 
@@ -91,6 +95,7 @@ struct process_manager : serialisable
     {
         s.handle_serialise(only_show_windowed, ser);
         s.handle_serialise(use_mouse_lock, ser);
+        s.handle_serialise(profiles, ser);
     }
 
     process_manager()
@@ -101,6 +106,17 @@ struct process_manager : serialisable
 
         dwidth = desk_dim.width;
         dheight = desk_dim.height;
+    }
+
+    std::optional<std::reference_wrapper<application_profile>> fetch_profile_by_name(const std::string& name)
+    {
+        for(auto& i :profiles)
+        {
+            if(i.name == name)
+                return i;
+        }
+
+        return std::nullopt;
     }
 
     void toggle_mouse_lock()
@@ -245,12 +261,11 @@ struct process_manager : serialisable
         ClipCursor(&wrect);
     }
 
-    void draw_window()
+    void draw_window(int& found_w)
     {
         ImGui::SetNextWindowPos(ImVec2(0, 0));
 
-        ImGui::Begin("Togglefun", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar);
-
+        ImGui::Begin("Applications", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar);
 
         ///yeah this is pretty crap
         ///but ImGui is a C API so
@@ -258,7 +273,7 @@ struct process_manager : serialisable
 
         for(auto& i : processes)
         {
-            if(!is_windowed(i.process_name) && only_show_windowed)
+            if(!is_windowed(i.process_name) && only_show_windowed && !fetch_profile_by_name(i.process_name).has_value())
                continue;
 
             names.push_back(i.process_name.c_str());
@@ -295,7 +310,7 @@ struct process_manager : serialisable
                 last_managed_window = names[imgui_current_item];
             }
 
-            if(ImGui::Button("Make Borderless, set to top left (recommended)"))
+            if(ImGui::Button("Make Borderless, set to top left"))
             {
                 set_borderless(names[imgui_current_item], true);
 
@@ -321,6 +336,27 @@ struct process_manager : serialisable
                 bool move_to_tl = new_info.w == dwidth && new_info.h == dheight;
                 printf("%i %i %i %i\n", new_info.w, dwidth, new_info.h, dheight);*/
             }
+
+            if(!fetch_profile_by_name(names[imgui_current_item]).has_value() && ImGui::Button("Create Profile"))
+            {
+                application_profile prof;
+                prof.name = names[imgui_current_item];
+
+                profiles.push_back(prof);
+            }
+
+            if(fetch_profile_by_name(names[imgui_current_item]).has_value() && ImGui::Button("Delete Profile"))
+            {
+                for(int i=0; i < (int)profiles.size(); i++)
+                {
+                    if(profiles[i].name == names[imgui_current_item])
+                    {
+                        profiles.erase(profiles.begin() + i);
+                        i--;
+                        continue;
+                    }
+                }
+            }
         }
 
         if(ImGui::Button("Refresh"))
@@ -332,6 +368,39 @@ struct process_manager : serialisable
         {
             should_quit = true;
         }
+
+        int window_w = ImGui::GetWindowWidth();
+
+        found_w += window_w;
+
+        ImGui::End();
+
+        ImGui::SetNextWindowPos(ImVec2(window_w, 0));
+        ImGui::Begin("Profiles", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar);
+
+        bool success = false;
+
+        if(names.size() > 0)
+        {
+            std::optional opt_profile = fetch_profile_by_name(names[imgui_current_item]);
+
+            if(opt_profile.has_value())
+            {
+                auto ref_profile = *opt_profile;
+
+                ref_profile.get().draw_window_internals();
+
+                success = true;
+            }
+        }
+
+        if(!success)
+        {
+            ///yup
+            ImGui::Text("        ");
+        }
+
+        found_w += ImGui::GetWindowWidth();
 
         ImGui::End();
     }
@@ -357,7 +426,7 @@ int main()
     sf::ContextSettings settings;
     settings.antialiasingLevel = 8;
 
-    window.create(sf::VideoMode(350, 350),"Wowee", sf::Style::Default, settings);
+    window.create(sf::VideoMode(600, 400),"Wowee", sf::Style::Default, settings);
     window.setVerticalSyncEnabled(true);
     window.setFramerateLimit(60);
 
@@ -446,8 +515,19 @@ int main()
             process_manage.toggle_mouse_lock();
         }
 
+        int desired_w = 0;
+
         process_manage.handle_mouse_lock();
-        process_manage.draw_window();
+        process_manage.draw_window(desired_w);
+
+        if(desired_w > 100 && abs(desired_w - (int)window.getSize().x) > 10)
+        {
+            int dx = desired_w;
+            int dy = window.getSize().y;
+
+            window.setSize({(unsigned int)dx, (unsigned int)dy});
+            window.setView(sf::View(sf::FloatRect(0, 0, dx, dy)));
+        }
 
         if(process_manage.should_quit)
             going = false;

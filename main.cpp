@@ -90,6 +90,7 @@ struct process_manager : serialisable
     bool should_quit = false;
     bool only_show_windowed = true;
     bool use_mouse_lock = true;
+    bool use_f9_refresh = true;
 
     bool lock_mouse_to_window = false;
 
@@ -337,6 +338,8 @@ struct process_manager : serialisable
 
         ImGui::Checkbox("Use End to lock mouse to window", &use_mouse_lock);
 
+        ImGui::Checkbox("Refresh on f9", &use_f9_refresh);
+
         if(names.size() > 0)
         {
             if(ImGui::Button("Make Borderless"))
@@ -486,7 +489,8 @@ int main()
     process_manager process_manage;
 
     sf::Keyboard key;
-    bool toggled_key = false;
+    bool toggled_end_key = false;
+    bool toggled_f9_key = false;
 
     sf::Clock ui_clock;
     sf::Clock refresh_clock;
@@ -548,15 +552,26 @@ int main()
         }
 
         if(!key.isKeyPressed(sf::Keyboard::End))
-            toggled_key = false;
+            toggled_end_key = false;
 
-        if(key.isKeyPressed(sf::Keyboard::End) && !toggled_key && process_manage.use_mouse_lock)
+        if(key.isKeyPressed(sf::Keyboard::End) && !toggled_end_key && process_manage.use_mouse_lock)
         {
-            toggled_key = true;
+            toggled_end_key = true;
 
             process_manage.refresh();
             process_manage.toggle_mouse_lock();
             process_manage.handle_mouse_lock();
+        }
+
+        ///TODO: Use a better system for this
+        if(!key.isKeyPressed(sf::Keyboard::F9))
+            toggled_f9_key = false;
+
+        if(key.isKeyPressed(sf::Keyboard::F9) && !toggled_f9_key && process_manage.use_f9_refresh)
+        {
+            toggled_f9_key = true;
+
+            process_manage.refresh();
         }
 
         int desired_w = 0;
@@ -575,6 +590,8 @@ int main()
 
         if(process_manage.should_quit)
             going = false;
+
+        //process_manage.refresh();
 
         ImGui::Render();
         window.display();

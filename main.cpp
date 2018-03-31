@@ -151,6 +151,24 @@ struct process_manager
         info.dump_styles();
     }
 
+    bool is_windowed(const std::string& name)
+    {
+        proc_info info = fetch_by_name(name);
+
+        if(!info.valid())
+        {
+            printf("Invalid window\n");
+            return false;
+        }
+
+        if(name == "explorer.exe")
+            return false;
+
+        auto style = info.get_style();
+
+        return ((style & WS_CAPTION) > 0);
+    }
+
     void set_fullscreen(const std::string& name, bool state)
     {
         proc_info info = fetch_by_name(name);
@@ -192,7 +210,7 @@ struct process_manager
 
     void draw_window()
     {
-        ImGui::Begin("Togglefun", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+        ImGui::Begin("Togglefun", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar);
 
         ///yeah this is pretty crap
         ///but ImGui is a C API so
@@ -200,6 +218,9 @@ struct process_manager
 
         for(auto& i : processes)
         {
+            if(!is_windowed(i.process_name))
+               continue;
+
             names.push_back(i.process_name.c_str());
         }
 
@@ -209,27 +230,27 @@ struct process_manager
 
             if(ImGui::Button("Make Borderless"))
             {
-                set_borderless(processes[imgui_current_item].process_name, false);
+                set_borderless(names[imgui_current_item], false);
             }
 
             if(ImGui::Button("Make Windowed"))
             {
-                set_bordered(processes[imgui_current_item].process_name);
+                set_bordered(names[imgui_current_item]);
             }
 
-            if(ImGui::Button("Make Borderless and set to top left"))
+            if(ImGui::Button("Make Borderless and set to top left (recommended)"))
             {
-                set_borderless(processes[imgui_current_item].process_name, true);
+                set_borderless(names[imgui_current_item], true);
             }
 
             if(ImGui::Button("Make Fullscreen (not recommended)"))
             {
-                set_fullscreen(processes[imgui_current_item].process_name, true);
+                set_fullscreen(names[imgui_current_item], true);
             }
 
             if(ImGui::Button("Make Not Fullscreen (broken)"))
             {
-                set_fullscreen(processes[imgui_current_item].process_name, false);
+                set_fullscreen(names[imgui_current_item], false);
             }
         }
 
@@ -257,7 +278,7 @@ int main()
     sf::ContextSettings settings;
     settings.antialiasingLevel = 8;
 
-    window.create(sf::VideoMode(800, 600),"Wowee", sf::Style::Default, settings);
+    window.create(sf::VideoMode(350, 350),"Wowee", sf::Style::Default, settings);
     window.setVerticalSyncEnabled(true);
 
     ImGui::SFML::Init(window);

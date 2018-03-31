@@ -107,12 +107,7 @@ struct process_manager : serialisable
 
     process_manager()
     {
-        processes = get_process_infos();
-
-        auto desk_dim = sf::VideoMode::getDesktopMode();
-
-        dwidth = desk_dim.width;
-        dheight = desk_dim.height;
+        refresh();
     }
 
     std::optional<std::reference_wrapper<application_profile>> fetch_profile_by_name(const std::string& name)

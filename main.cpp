@@ -219,10 +219,15 @@ struct process_manager
                 set_fullscreen(processes[imgui_current_item].process_name, true);
             }
 
-            /*if(ImGui::Button("Make Not Fullscreen"))
+            if(ImGui::Button("Make Not Fullscreen (broken)"))
             {
                 set_fullscreen(processes[imgui_current_item].process_name, false);
-            }*/
+            }
+        }
+
+        if(ImGui::Button("Refresh"))
+        {
+            refresh();
         }
 
         ImGui::End();

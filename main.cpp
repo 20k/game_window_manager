@@ -17,6 +17,10 @@ struct proc_info
     HWND handle = 0;
     HANDLE hProcess = 0;
     WINDOWPLACEMENT g_wpPrev = { sizeof(g_wpPrev) };
+    DWORD processID = 0;
+
+    int w = 0;
+    int h = 0;
 
     bool valid()
     {
@@ -69,9 +73,17 @@ struct process_manager
     int imgui_current_item = 0;
     bool should_quit = false;
 
+    int dwidth = 0;
+    int dheight = 0;
+
     process_manager()
     {
         processes = get_process_infos();
+
+        auto desk_dim = sf::VideoMode::getDesktopMode();
+
+        dwidth = desk_dim.width;
+        dheight = desk_dim.height;
     }
 
     void refresh()
@@ -199,6 +211,7 @@ struct process_manager
             }
         }
 
+        ///broken, unused
         if(!state && !(style & WS_OVERLAPPEDWINDOW))
         {
             SetWindowLong(info.handle, GWL_STYLE,
@@ -228,6 +241,12 @@ struct process_manager
             names.push_back(i.process_name.c_str());
         }
 
+        if(imgui_current_item >= (int)names.size())
+            imgui_current_item = ((int)names.size())-1;
+
+        if(imgui_current_item < 0)
+            imgui_current_item = 0;
+
         if(names.size() > 0)
         {
             ImGui::ListBox("###Window", &imgui_current_item, &names[0], names.size());
@@ -245,6 +264,24 @@ struct process_manager
             if(ImGui::Button("Make Borderless, set to top left (recommended)"))
             {
                 set_borderless(names[imgui_current_item], true);
+            }
+
+            if(ImGui::Button("Make Borderless Auto"))
+            {
+                proc_info info = fetch_by_name(names[imgui_current_item]);
+
+                int a1_diff = abs(info.w - dwidth);
+                int a2_diff = abs(info.h - dheight);
+
+                bool move_to_tl = a1_diff < 30 && a2_diff < 30;
+
+                std::cout << "Move? " << move_to_tl << std::endl;
+
+                set_borderless(names[imgui_current_item], move_to_tl);
+
+                /*proc_info new_info = process_id_to_proc_info(info.processID);
+                bool move_to_tl = new_info.w == dwidth && new_info.h == dheight;
+                printf("%i %i %i %i\n", new_info.w, dwidth, new_info.h, dheight);*/
             }
 
             if(ImGui::Button("Make Fullscreen (not recommended)"))

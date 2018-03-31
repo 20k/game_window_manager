@@ -77,6 +77,13 @@ proc_info process_id_to_proc_info(DWORD processID)
     info.process_name = szProcessName;
     info.handle = handle;
     info.hProcess = hProcess;
+    info.processID = processID;
+
+    RECT rect;
+    GetWindowRect(handle, &rect);
+
+    info.w = rect.right - rect.left;
+    info.h = abs(rect.bottom - rect.top);
 
     return info;
 }

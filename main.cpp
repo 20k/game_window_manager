@@ -162,7 +162,8 @@ struct process_manager
             return false;
         }
 
-        if(name == "explorer.exe")
+        ///hack in lieu of something better
+        if(name == "explorer.exe" || name == "explorer.EXE")
             return false;
 
         auto style = info.get_style();

@@ -11,6 +11,8 @@
 #include <imgui/imgui.h>
 #include <imgui/imgui-SFML.h>
 
+#include <funserialisation/serialise.hpp>
+
 struct proc_info
 {
     std::string process_name = "Error";
@@ -67,7 +69,7 @@ struct proc_info
 
 #include "winapi_interop.hpp"
 
-struct process_manager
+struct process_manager : serialisable
 {
     std::string last_managed_window = "";
 
@@ -84,6 +86,12 @@ struct process_manager
 
     int dwidth = 0;
     int dheight = 0;
+
+    virtual void do_serialise(serialise& s, bool ser) override
+    {
+        s.handle_serialise(only_show_windowed, ser);
+        s.handle_serialise(use_mouse_lock, ser);
+    }
 
     process_manager()
     {
@@ -369,8 +377,13 @@ int main()
     bool toggled_key = false;
 
     sf::Clock ui_clock;
-
     sf::Clock refresh_clock;
+    sf::Clock save_clock;
+
+    serialise ser;
+    ser.load("save_data.bin");
+
+    ser.handle_serialise_no_clear(process_manage, false);
 
     bool focused = true;
     bool going = true;
@@ -412,6 +425,16 @@ int main()
             //process_manage.refresh();
         }
 
+        if(save_clock.getElapsedTime().asSeconds() > 1)
+        {
+            save_clock.restart();
+
+            serialise ser;
+            ser.handle_serialise(process_manage, true);
+
+            ser.save("save_data.bin");
+        }
+
         if(!key.isKeyPressed(sf::Keyboard::End))
             toggled_key = false;
 
@@ -437,6 +460,10 @@ int main()
 
         sf::sleep(sf::milliseconds(4));
     }
+
+    serialise ssave;
+    ssave.handle_serialise(process_manage, true);
+    ssave.save("save_data.bin");
 
     return 0;
 }

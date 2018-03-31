@@ -1,0 +1,3 @@
+[submodule "deps/funserialisation"]
+	path = deps/funserialisation
+	url = https://github.com/20k/funserialisation

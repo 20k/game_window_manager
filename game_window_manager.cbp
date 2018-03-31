@@ -43,7 +43,13 @@
 		</Build>
 		<Compiler>
 			<Add option="-Wall" />
+			<Add option="-std=c++1z" />
 			<Add option="-fexceptions" />
+			<Add option="-DNO_VEC_SUPPORT" />
+			<Add option="-DNO_COMPRESSION" />
+			<Add option="-DNET_CLIENT" />
+			<Add option="-DNO_SFML" />
+			<Add directory="deps" />
 		</Compiler>
 		<Linker>
 			<Add option="-lpsapi" />
@@ -57,6 +63,8 @@
 			<Add option="-lflac" />
 			<Add option="-lopenal32" />
 		</Linker>
+		<Unit filename="deps/funserialisation/serialise.cpp" />
+		<Unit filename="deps/funserialisation/serialise.hpp" />
 		<Unit filename="main.cpp" />
 		<Unit filename="winapi_interop.hpp" />
 		<Extensions>

@@ -43,9 +43,12 @@ struct proc_info
         SetWindowLongPtr(handle, GWL_EXSTYLE, dat);
     }
 
-    void refresh()
+    void refresh(bool should_move = false)
     {
-        SetWindowPos(handle, NULL, 0,0,0,0, SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOOWNERZORDER);
+        if(!should_move)
+            SetWindowPos(handle, NULL, 0,0,0,0, SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOOWNERZORDER);
+        else
+            SetWindowPos(handle, NULL, 0,0,0,0, SWP_FRAMECHANGED | SWP_NOSIZE | SWP_NOZORDER | SWP_NOOWNERZORDER);
     }
 
     void dump_styles()
@@ -94,7 +97,7 @@ struct process_manager
         }
     }
 
-    void set_borderless(const std::string& name)
+    void set_borderless(const std::string& name, bool should_move)
     {
         proc_info info = fetch_by_name(name);
 
@@ -116,7 +119,7 @@ struct process_manager
 
         info.set_ex_style(original_ex_style);
 
-        info.refresh();
+        info.refresh(should_move);
 
         info.dump_styles();
     }
@@ -206,7 +209,7 @@ struct process_manager
 
             if(ImGui::Button("Make Borderless"))
             {
-                set_borderless(processes[imgui_current_item].process_name);
+                set_borderless(processes[imgui_current_item].process_name, false);
             }
 
             if(ImGui::Button("Make Windowed"))
@@ -214,7 +217,12 @@ struct process_manager
                 set_bordered(processes[imgui_current_item].process_name);
             }
 
-            if(ImGui::Button("Make Fullscreen"))
+            if(ImGui::Button("Make Borderless and set to top left"))
+            {
+                set_borderless(processes[imgui_current_item].process_name, true);
+            }
+
+            if(ImGui::Button("Make Fullscreen (not recommended)"))
             {
                 set_fullscreen(processes[imgui_current_item].process_name, true);
             }

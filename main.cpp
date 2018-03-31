@@ -9,6 +9,7 @@
 
 #include <SFML/Graphics.hpp>
 #include <imgui/imgui.h>
+#include <imgui/imgui-SFML.h>
 
 struct proc_info
 {
@@ -61,10 +62,16 @@ struct proc_info
 struct process_manager
 {
     std::vector<proc_info> processes;
+    int imgui_current_item = 0;
 
     process_manager()
     {
         processes = get_process_infos();
+    }
+
+    void refresh()
+    {
+        *this = process_manager();
     }
 
     proc_info fetch_by_name(const std::string& name)
@@ -140,6 +147,37 @@ struct process_manager
         info.dump_styles();
     }
 
+    void draw_window()
+    {
+        ImGui::Begin("Togglefun", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+
+        ///yeah this is pretty crap
+        ///but ImGui is a C API so
+        std::vector<const char*> names;
+
+        for(auto& i : processes)
+        {
+            names.push_back(i.process_name.c_str());
+        }
+
+        if(names.size() > 0)
+        {
+            ImGui::ListBox("###Window", &imgui_current_item, &names[0], names.size());
+
+            if(ImGui::Button("Make Borderless"))
+            {
+                set_borderless(processes[imgui_current_item].process_name);
+            }
+
+            if(ImGui::Button("Make Windowed"))
+            {
+                set_bordered(processes[imgui_current_item].process_name);
+            }
+        }
+
+        ImGui::End();
+    }
+
     ~process_manager()
     {
         for(proc_info& info : processes)
@@ -152,13 +190,75 @@ struct process_manager
 
 int main()
 {
+    sf::RenderWindow window;
+    sf::ContextSettings settings;
+    settings.antialiasingLevel = 8;
+
+    window.create(sf::VideoMode(800, 600),"Wowee", sf::Style::Default, settings);
+    window.setVerticalSyncEnabled(true);
+
+    ImGui::SFML::Init(window);
+
+    ImGui::NewFrame();
+
+    ImGuiStyle& style = ImGui::GetStyle();
+
+    style.FrameRounding = 2;
+    style.WindowRounding = 2;
+    style.ChildWindowRounding = 2;
+
     process_manager process_manage;
 
-    process_manage.set_borderless("crapmud_client.exe");
+    sf::Clock ui_clock;
 
-    Sleep(1000);
+    sf::Clock refresh_clock;
 
-    process_manage.set_bordered("crapmud_client.exe");
+    bool focused = true;
+    bool going = true;
+
+    while(going)
+    {
+        sf::Event event;
+
+        while(window.pollEvent(event))
+        {
+            ImGui::SFML::ProcessEvent(event);
+
+            if(event.type == sf::Event::Closed)
+                going = false;
+
+            if(event.type == sf::Event::Resized)
+            {
+                window.setSize({event.size.width, event.size.height});
+                window.setView(sf::View(sf::FloatRect(0, 0, event.size.width, event.size.height)));
+            }
+
+            if(event.type == sf::Event::GainedFocus)
+            {
+                focused = true;
+            }
+
+            if(event.type == sf::Event::LostFocus)
+            {
+                focused = false;
+            }
+        }
+
+        if(refresh_clock.getElapsedTime().asSeconds() > 1)
+        {
+            refresh_clock.restart();
+
+            //process_manage.refresh();
+        }
+
+        process_manage.draw_window();
+
+        ImGui::Render();
+        window.display();
+        window.clear();
+
+        ImGui::SFML::Update(ui_clock.restart());
+    }
 
     return 0;
 }

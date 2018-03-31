@@ -34,10 +34,15 @@
 		</Compiler>
 		<Linker>
 			<Add option="-lpsapi" />
-			<Add option="-lsfml-system" />
-			<Add option="-lsfml-window" />
-			<Add option="-lsfml-graphics" />
+			<Add option="-lmingw32" />
 			<Add option="-limgui" />
+			<Add option="-lsfml-graphics" />
+			<Add option="-lsfml-window" />
+			<Add option="-lsfml-system" />
+			<Add option="-lfreetype" />
+			<Add option="-lopengl32" />
+			<Add option="-lflac" />
+			<Add option="-lopenal32" />
 		</Linker>
 		<Unit filename="main.cpp" />
 		<Unit filename="winapi_interop.hpp" />

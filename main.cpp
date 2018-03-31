@@ -25,6 +25,21 @@ struct proc_info
     {
         return GetWindowLongPtr(handle, GWL_EXSTYLE);
     }
+
+    void set_style(LONG_PTR dat)
+    {
+        SetWindowLongPtr(handle, GWL_STYLE, dat);
+    }
+
+    void set_ex_style(LONG_PTR dat)
+    {
+        SetWindowLongPtr(handle, GWL_EXSTYLE, dat);
+    }
+
+    void refresh()
+    {
+        SetWindowPos(handle, NULL, 0,0,0,0, SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOOWNERZORDER);
+    }
 };
 
 #include "winapi_interop.hpp"
@@ -68,16 +83,16 @@ struct process_manager
         }
 
         auto original_style = info.get_style();
-
         original_style &= ~(WS_CAPTION | WS_THICKFRAME | WS_MINIMIZE | WS_MAXIMIZE | WS_SYSMENU);
 
-        SetWindowLongPtr(info.handle, GWL_STYLE, original_style);
+        info.set_style(original_style);
 
-        LONG lExStyle = info.get_ex_style();
-        lExStyle &= ~(WS_EX_DLGMODALFRAME | WS_EX_CLIENTEDGE | WS_EX_STATICEDGE);
-        SetWindowLongPtr(info.handle, GWL_EXSTYLE, lExStyle);
+        auto original_ex_style = info.get_ex_style();
+        original_ex_style &= ~(WS_EX_DLGMODALFRAME | WS_EX_CLIENTEDGE | WS_EX_STATICEDGE);
 
-        SetWindowPos(info.handle, NULL, 0,0,0,0, SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOOWNERZORDER);
+        info.set_ex_style(original_ex_style);
+
+        info.refresh();
     }
 
     ~process_manager()

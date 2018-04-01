@@ -137,16 +137,23 @@ struct process_manager : serialisable
 
         prof.applied = true;
 
+        if(prof.auto_borderless)
+        {
+            set_borderless(proc.process_name, prof.should_move_application, prof.application_x, prof.application_y);
+        }
+
+        Sleep(100);
+
+        ///this doesn't work when we also set the window borderless
+        ///why not?
+        ///might be because i'm testing on my own window, and it doesn't redraw
         if(prof.auto_lock_mouse)
         {
             proc.lock_mouse_to();
 
             lock_mouse_to_window = true;
-        }
 
-        if(prof.auto_borderless)
-        {
-            set_borderless(proc.process_name, prof.should_move_application, prof.application_x, prof.application_y);
+            printf("Confine Mouse\n");
         }
 
         printf("applied profile\n");

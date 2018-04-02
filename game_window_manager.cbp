@@ -53,15 +53,12 @@
 		</Compiler>
 		<Linker>
 			<Add option="-lpsapi" />
-			<Add option="-lmingw32" />
 			<Add option="-limgui" />
 			<Add option="-lsfml-graphics" />
 			<Add option="-lsfml-window" />
 			<Add option="-lsfml-system" />
 			<Add option="-lfreetype" />
 			<Add option="-lopengl32" />
-			<Add option="-lflac" />
-			<Add option="-lopenal32" />
 		</Linker>
 		<Unit filename="application_profile.hpp" />
 		<Unit filename="deps/funserialisation/serialise.cpp" />

@@ -17,32 +17,32 @@ struct process_info
     int w = 0;
     int h = 0;
 
-    bool valid()
+    bool valid() const
     {
         return handle != 0;
     }
 
-    LONG_PTR get_style()
+    LONG_PTR get_style() const
     {
         return GetWindowLongPtr(handle, GWL_STYLE);
     }
 
-    LONG_PTR get_ex_style()
+    LONG_PTR get_ex_style() const
     {
         return GetWindowLongPtr(handle, GWL_EXSTYLE);
     }
 
-    void set_style(LONG_PTR dat)
+    void set_style(LONG_PTR dat) const
     {
         SetWindowLongPtr(handle, GWL_STYLE, dat);
     }
 
-    void set_ex_style(LONG_PTR dat)
+    void set_ex_style(LONG_PTR dat) const
     {
         SetWindowLongPtr(handle, GWL_EXSTYLE, dat);
     }
 
-    void refresh(bool should_move = false, int move_x = 0, int move_y = 0)
+    void refresh(bool should_move = false, int move_x = 0, int move_y = 0) const
     {
         if(!should_move)
             SetWindowPos(handle, NULL, 0,0,0,0, SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOOWNERZORDER);
@@ -50,7 +50,7 @@ struct process_info
             SetWindowPos(handle, NULL, move_x, move_y, 0,0, SWP_FRAMECHANGED | SWP_NOSIZE | SWP_NOZORDER | SWP_NOOWNERZORDER);
     }
 
-    void dump_styles()
+    void dump_styles() const
     {
         std::bitset<64> b1(get_style());
         std::bitset<64> b2(get_ex_style());

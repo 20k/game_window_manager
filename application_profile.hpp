@@ -9,6 +9,7 @@ struct application_profile : serialisable
     ///not persisted. purely for bookkeeping
     bool applied = false;
     bool should_apply_immediately = false;
+    float time_since_detected = 0.f;
 
     std::string name;
 

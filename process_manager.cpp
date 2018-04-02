@@ -36,7 +36,7 @@ void process_manager::apply_profile(application_profile& prof, process_info& pro
 
     if(prof.auto_borderless)
     {
-        set_borderless(proc.process_name, prof.should_move_application, prof.application_x, prof.application_y);
+        set_borderless(proc, prof.should_move_application, prof.application_x, prof.application_y);
     }
 
     if(!prof.auto_borderless && prof.should_move_application)
@@ -89,20 +89,46 @@ void process_manager::refresh()
     }
 }
 
-void process_manager::check_apply_profile_to_foreground_window()
+void process_manager::check_apply_profile_to_foreground_window(double dt_s)
 {
     HWND handle = GetForegroundWindow();
 
-    if(handle == NULL)
-        return;
-
     process_info proc = window_handle_to_process_info(handle);
+
+    if(!proc.valid())
+    {
+        for(application_profile& prof : profiles)
+        {
+            prof.applied = false;
+        }
+
+        return;
+    }
+
+    printf("checking\n");
 
     for(application_profile& prof : profiles)
     {
         if(prof.name == proc.process_name)
         {
+            if(prof.applied)
+                continue;
+
+            std::cout << "Not applied to " << prof.name << std::endl;
+
+            prof.time_since_detected += dt_s;
+
+            if(prof.time_since_detected < prof.init_delay_s)
+                continue;
+
+            std::cout << "applying" << std::endl;
+
             apply_profile(prof, proc);
+        }
+
+        if(prof.name != proc.process_name)
+        {
+            prof.applied = false;
         }
     }
 }
@@ -126,13 +152,11 @@ void process_manager::dump()
     }
 }
 
-void process_manager::set_borderless(const std::string& name, bool should_move, int move_w, int move_h)
+void process_manager::set_borderless(const process_info& info, bool should_move, int move_w, int move_h)
 {
-    process_info info = fetch_by_name(name);
-
     if(!info.valid())
     {
-        printf("Invalid window\n");
+        printf("Invalid window borderless\n");
         return;
     }
 
@@ -153,13 +177,11 @@ void process_manager::set_borderless(const std::string& name, bool should_move, 
     info.dump_styles();
 }
 
-void process_manager::set_bordered(const std::string& name)
+void process_manager::set_bordered(const process_info& info)
 {
-    process_info info = fetch_by_name(name);
-
     if(!info.valid())
     {
-        printf("Invalid window\n");
+        printf("Invalid window bordered\n");
         return;
     }
 
@@ -180,18 +202,16 @@ void process_manager::set_bordered(const std::string& name)
     info.dump_styles();
 }
 
-bool process_manager::is_windowed(const std::string& name)
+bool process_manager::is_windowed(const process_info& info)
 {
-    process_info info = fetch_by_name(name);
-
     if(!info.valid())
     {
-        printf("Invalid window\n");
+        printf("Invalid window windowed\n");
         return false;
     }
 
     ///hack in lieu of something better
-    if(name == "explorer.exe" || name == "explorer.EXE")
+    if(info.process_name == "explorer.exe" || info.process_name == "explorer.EXE")
         return false;
 
     auto style = info.get_style();
@@ -244,7 +264,7 @@ void process_manager::draw_window(int& found_w)
 
     for(auto& i : processes)
     {
-        if(!is_windowed(i.process_name) && only_show_windowed && !fetch_profile_by_name(i.process_name).has_value())
+        if(!is_windowed(fetch_by_name(i.process_name)) && only_show_windowed && !fetch_profile_by_name(i.process_name).has_value())
             continue;
 
         names.push_back(i.process_name.c_str());
@@ -271,21 +291,21 @@ void process_manager::draw_window(int& found_w)
     {
         if(ImGui::Button("Make Borderless"))
         {
-            set_borderless(names[imgui_current_item], false);
+            set_borderless(fetch_by_name(names[imgui_current_item]), false);
 
             last_managed_window = names[imgui_current_item];
         }
 
         if(ImGui::Button("Make Windowed"))
         {
-            set_bordered(names[imgui_current_item]);
+            set_bordered(fetch_by_name(names[imgui_current_item]));
 
             last_managed_window = names[imgui_current_item];
         }
 
         if(ImGui::Button("Make Borderless, set to top left"))
         {
-            set_borderless(names[imgui_current_item], true);
+            set_borderless(fetch_by_name(names[imgui_current_item]), true);
 
             last_managed_window = names[imgui_current_item];
         }
@@ -301,7 +321,7 @@ void process_manager::draw_window(int& found_w)
 
             std::cout << "Move? " << move_to_tl << std::endl;
 
-            set_borderless(names[imgui_current_item], move_to_tl);
+            set_borderless(fetch_by_name(names[imgui_current_item]), move_to_tl);
 
             last_managed_window = names[imgui_current_item];
 

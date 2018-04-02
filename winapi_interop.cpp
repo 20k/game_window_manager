@@ -46,6 +46,9 @@ BOOL is_main_window(HWND handle)
 
 process_info window_handle_to_process_info(HWND window_handle)
 {
+    if(window_handle == NULL)
+        return process_info();
+
     TCHAR szProcessName[MAX_PATH] = TEXT("<unknown>");
 
     DWORD processID;

@@ -47,6 +47,7 @@ int main()
     sf::Clock refresh_clock;
     sf::Clock save_clock;
     sf::Clock apply_clock;
+    sf::Clock frametime_clock;
 
     serialise ser;
     ser.load("save_data.bin");
@@ -55,6 +56,8 @@ int main()
 
     bool focused = true;
     bool going = true;
+
+    double frametime_s = 0;
 
     while(going)
     {
@@ -86,6 +89,8 @@ int main()
             }
         }
 
+        frametime_s = frametime_clock.restart().asMicroseconds() / 1000. / 1000.;
+
         if(refresh_clock.getElapsedTime().asSeconds() > 1)
         {
             refresh_clock.restart();
@@ -105,9 +110,11 @@ int main()
 
         if(apply_clock.getElapsedTime().asSeconds() > 1)
         {
+            double time_elapsed_s = apply_clock.getElapsedTime().asMicroseconds() / 1000. / 1000.;
+
             apply_clock.restart();
 
-            process_manage.check_apply_profile_to_foreground_window();
+            process_manage.check_apply_profile_to_foreground_window(time_elapsed_s);
         }
 
         if(!key.isKeyPressed(sf::Keyboard::End))

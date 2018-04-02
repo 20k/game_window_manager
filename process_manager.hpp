@@ -45,15 +45,15 @@ struct process_manager : serialisable
     void apply_profile(application_profile& prof, process_info& proc, bool force = false);
 
     void refresh();
-    void check_apply_profile_to_foreground_window();
+    void check_apply_profile_to_foreground_window(double dt_s);
 
     process_info fetch_by_name(const std::string& name);
 
     void dump();
 
-    void set_borderless(const std::string& name, bool should_move, int move_w = 0, int move_h = 0);
-    void set_bordered(const std::string& name);
-    bool is_windowed(const std::string& name);
+    void set_borderless(const process_info& info, bool should_move = false, int move_w = 0, int move_h = 0);
+    void set_bordered(const process_info& info);
+    bool is_windowed(const process_info& info);
 
     void handle_mouse_lock();
 

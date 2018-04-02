@@ -42,6 +42,16 @@ struct application_profile : serialisable
     {
         ImGui::Text(name.c_str());
 
+        //ImGui::InputFloat("Init Delay (s)", &init_delay_s);
+
+        ImGui::DragFloat("Init Delay (s)", &init_delay_s, 0.1f, 0.001f, 0.f, "%.1f");
+
+        if(init_delay_s < 0)
+            init_delay_s = 0;
+
+        if(ImGui::IsItemHovered())
+            ImGui::SetTooltip("Delays profile application by this amount after detection. Click and drag to change");
+
         ImGui::Checkbox("Auto Confine Mouse", &auto_lock_mouse);
 
         if(ImGui::IsItemHovered())
@@ -69,6 +79,12 @@ struct application_profile : serialisable
             ImGui::SetTooltip("Enable the profile?");
 
         should_apply_immediately = ImGui::Button("Force Apply");
+    }
+
+    void set_unset()
+    {
+        applied = false;
+        time_since_detected = 0;
     }
 };
 

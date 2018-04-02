@@ -99,7 +99,7 @@ void process_manager::check_apply_profile_to_foreground_window(double dt_s)
     {
         for(application_profile& prof : profiles)
         {
-            prof.applied = false;
+            prof.set_unset();
         }
 
         return;
@@ -128,7 +128,7 @@ void process_manager::check_apply_profile_to_foreground_window(double dt_s)
 
         if(prof.name != proc.process_name)
         {
-            prof.applied = false;
+            prof.set_unset();
         }
     }
 }
@@ -289,16 +289,16 @@ void process_manager::draw_window(int& found_w)
 
     if(names.size() > 0)
     {
-        if(ImGui::Button("Make Borderless"))
+        if(ImGui::Button("Make Windowed"))
         {
-            set_borderless(fetch_by_name(names[imgui_current_item]), false);
+            set_bordered(fetch_by_name(names[imgui_current_item]));
 
             last_managed_window = names[imgui_current_item];
         }
 
-        if(ImGui::Button("Make Windowed"))
+        if(ImGui::Button("Make Borderless"))
         {
-            set_bordered(fetch_by_name(names[imgui_current_item]));
+            set_borderless(fetch_by_name(names[imgui_current_item]), false);
 
             last_managed_window = names[imgui_current_item];
         }
@@ -310,6 +310,7 @@ void process_manager::draw_window(int& found_w)
             last_managed_window = names[imgui_current_item];
         }
 
+        #if 0
         if(ImGui::Button("Make Borderless Auto"))
         {
             process_info info = fetch_by_name(names[imgui_current_item]);
@@ -329,6 +330,7 @@ void process_manager::draw_window(int& found_w)
             bool move_to_tl = new_info.w == dwidth && new_info.h == dheight;
             printf("%i %i %i %i\n", new_info.w, dwidth, new_info.h, dheight);*/
         }
+        #endif // 0
 
         if(!fetch_profile_by_name(names[imgui_current_item]).has_value() && ImGui::Button("Create Profile"))
         {

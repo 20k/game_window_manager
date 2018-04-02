@@ -49,10 +49,15 @@ int main()
     sf::Clock apply_clock;
     sf::Clock frametime_clock;
 
-    serialise ser;
-    ser.load("save_data.bin");
+    std::ifstream test_file("save_data.bin");
 
-    ser.handle_serialise_no_clear(process_manage, false);
+    if(test_file.good())
+    {
+        serialise ser;
+        ser.load("save_data.bin");
+
+        ser.handle_serialise_no_clear(process_manage, false);
+    }
 
     bool focused = true;
     bool going = true;

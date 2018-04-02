@@ -24,12 +24,12 @@ void process_manager::toggle_mouse_lock()
     lock_mouse_to_window = !lock_mouse_to_window;
 }
 
-void process_manager::apply_profile(application_profile& prof, process_info& proc)
+void process_manager::apply_profile(application_profile& prof, process_info& proc, bool force)
 {
-    if(prof.applied)
+    if(prof.applied && !force)
         return;
 
-    if(!prof.enabled)
+    if(!prof.enabled && !force)
         return;
 
     prof.applied = true;
@@ -344,6 +344,13 @@ void process_manager::draw_window(int& found_w)
             auto ref_profile = *opt_profile;
 
             ref_profile.get().draw_window_internals();
+
+            if(ref_profile.get().should_apply_immediately)
+            {
+                auto proc_info = fetch_by_name(ref_profile.get().name);
+
+                apply_profile(ref_profile.get(), proc_info, true);
+            }
 
             success = true;
         }

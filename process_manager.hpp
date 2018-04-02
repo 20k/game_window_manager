@@ -42,7 +42,7 @@ struct process_manager : serialisable
 
     void toggle_mouse_lock();
 
-    void apply_profile(application_profile& prof, process_info& proc);
+    void apply_profile(application_profile& prof, process_info& proc, bool force = false);
 
     void refresh();
 

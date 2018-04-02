@@ -8,6 +8,7 @@ struct application_profile : serialisable
 {
     ///not persisted. purely for bookkeeping
     bool applied = false;
+    bool should_apply_immediately = false;
 
     std::string name;
 
@@ -65,6 +66,8 @@ struct application_profile : serialisable
 
         if(ImGui::IsItemHovered())
             ImGui::SetTooltip("Enable the profile?");
+
+        should_apply_immediately = ImGui::Button("Force Apply");
     }
 };
 

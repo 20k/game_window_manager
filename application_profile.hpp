@@ -2,6 +2,7 @@
 #define APPLICATION_PROFILE_HPP_INCLUDED
 
 #include <funserialisation/serialise.hpp>
+#include <imgui/imgui.h>
 
 struct application_profile : serialisable
 {

@@ -63,9 +63,14 @@
 			<Add option="-lflac" />
 			<Add option="-lopenal32" />
 		</Linker>
+		<Unit filename="application_profile.hpp" />
 		<Unit filename="deps/funserialisation/serialise.cpp" />
 		<Unit filename="deps/funserialisation/serialise.hpp" />
 		<Unit filename="main.cpp" />
+		<Unit filename="process_info.hpp" />
+		<Unit filename="process_manager.cpp" />
+		<Unit filename="process_manager.hpp" />
+		<Unit filename="winapi_interop.cpp" />
 		<Unit filename="winapi_interop.hpp" />
 		<Extensions>
 			<code_completion />

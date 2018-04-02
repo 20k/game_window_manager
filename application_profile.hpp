@@ -15,7 +15,7 @@ struct application_profile : serialisable
     bool auto_borderless = false;
     float init_delay_s = 1.f;
 
-    bool should_move_application = false;
+    bool should_move_application = true;
     int application_x = 0;
     int application_y = 0;
 
@@ -40,10 +40,20 @@ struct application_profile : serialisable
     {
         ImGui::Text(name.c_str());
 
-        ImGui::Checkbox("Auto Confine mouse", &auto_lock_mouse);
-        ImGui::Checkbox("Auto borderless", &auto_borderless);
+        ImGui::Checkbox("Auto Confine Mouse", &auto_lock_mouse);
+
+        if(ImGui::IsItemHovered())
+            ImGui::SetTooltip("Locks the mouse cursor to the game");
+
+        ImGui::Checkbox("Auto Borderless", &auto_borderless);
+
+        if(ImGui::IsItemHovered())
+            ImGui::SetTooltip("Sets a windowed game to be borderless windowed");
 
         ImGui::Checkbox("Move Window?", &should_move_application);
+
+        if(ImGui::IsItemHovered())
+            ImGui::SetTooltip("If enabled, moves the game's window to Start x and Start y");
 
         if(should_move_application)
         {
@@ -52,6 +62,9 @@ struct application_profile : serialisable
         }
 
         ImGui::Checkbox("Enabled", &enabled);
+
+        if(ImGui::IsItemHovered())
+            ImGui::SetTooltip("Enable the profile?");
     }
 };
 

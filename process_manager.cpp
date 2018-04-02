@@ -39,6 +39,11 @@ void process_manager::apply_profile(application_profile& prof, process_info& pro
         set_borderless(proc.process_name, prof.should_move_application, prof.application_x, prof.application_y);
     }
 
+    if(!prof.auto_borderless && prof.should_move_application)
+    {
+        proc.refresh(true, prof.application_x, prof.application_y);
+    }
+
     Sleep(100);
 
     ///this doesn't work when we also set the window borderless
@@ -125,7 +130,7 @@ void process_manager::set_borderless(const std::string& name, bool should_move, 
 
     info.set_ex_style(original_ex_style);
 
-    info.refresh(should_move);
+    info.refresh(should_move, move_w, move_h);
 
     info.dump_styles();
 }

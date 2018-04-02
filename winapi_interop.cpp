@@ -44,6 +44,47 @@ BOOL is_main_window(HWND handle)
     return GetWindow(handle, GW_OWNER) == (HWND)0 && IsWindowVisible(handle);
 }
 
+process_info window_handle_to_process_info(HWND window_handle)
+{
+    TCHAR szProcessName[MAX_PATH] = TEXT("<unknown>");
+
+    DWORD processID;
+
+    GetWindowThreadProcessId(window_handle, &processID);
+
+    HANDLE hProcess = OpenProcess( PROCESS_QUERY_INFORMATION |
+                                   PROCESS_VM_READ,
+                                   FALSE, processID );
+
+
+    if (NULL != hProcess )
+    {
+        HMODULE hMod;
+        DWORD cbNeeded;
+
+        if ( EnumProcessModules( hProcess, &hMod, sizeof(hMod),
+                                 &cbNeeded) )
+        {
+            GetModuleBaseName( hProcess, hMod, szProcessName,
+                               sizeof(szProcessName)/sizeof(TCHAR) );
+        }
+    }
+
+    process_info info;
+    info.process_name = szProcessName;
+    info.handle = window_handle;
+    info.hProcess = hProcess;
+    info.processID = processID;
+
+    RECT rect;
+    GetWindowRect(window_handle, &rect);
+
+    info.w = rect.right - rect.left;
+    info.h = abs(rect.bottom - rect.top);
+
+    return info;
+}
+
 process_info process_id_to_process_info(DWORD processID)
 {
     TCHAR szProcessName[MAX_PATH] = TEXT("<unknown>");

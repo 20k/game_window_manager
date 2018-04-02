@@ -89,6 +89,24 @@ void process_manager::refresh()
     }
 }
 
+void process_manager::check_apply_profile_to_foreground_window()
+{
+    HWND handle = GetForegroundWindow();
+
+    if(handle == NULL)
+        return;
+
+    process_info proc = window_handle_to_process_info(handle);
+
+    for(application_profile& prof : profiles)
+    {
+        if(prof.name == proc.process_name)
+        {
+            apply_profile(prof, proc);
+        }
+    }
+}
+
 process_info process_manager::fetch_by_name(const std::string& name)
 {
     for(auto& i : processes)

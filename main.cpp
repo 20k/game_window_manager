@@ -46,6 +46,7 @@ int main()
     sf::Clock ui_clock;
     sf::Clock refresh_clock;
     sf::Clock save_clock;
+    sf::Clock apply_clock;
 
     serialise ser;
     ser.load("save_data.bin");
@@ -100,6 +101,13 @@ int main()
             ser.handle_serialise(process_manage, true);
 
             ser.save("save_data.bin");
+        }
+
+        if(apply_clock.getElapsedTime().asSeconds() > 1)
+        {
+            apply_clock.restart();
+
+            process_manage.check_apply_profile_to_foreground_window();
         }
 
         if(!key.isKeyPressed(sf::Keyboard::End))

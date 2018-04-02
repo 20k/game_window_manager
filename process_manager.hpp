@@ -45,6 +45,7 @@ struct process_manager : serialisable
     void apply_profile(application_profile& prof, process_info& proc, bool force = false);
 
     void refresh();
+    void check_apply_profile_to_foreground_window();
 
     process_info fetch_by_name(const std::string& name);
 

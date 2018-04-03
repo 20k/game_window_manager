@@ -36,6 +36,10 @@ int main()
     style.FrameRounding = 2;
     style.WindowRounding = 2;
     style.ChildRounding = 2;
+    style.ChildBorderSize = 0;
+    style.FrameBorderSize = 0;
+    style.PopupBorderSize = 0;
+    style.WindowBorderSize = 0;
 
     process_manager process_manage;
 

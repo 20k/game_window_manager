@@ -258,27 +258,51 @@ void process_manager::draw_window(int& found_w)
 
     ImGui::Begin("Applications", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar);
 
-    ///yeah this is pretty crap
-    ///but ImGui is a C API so
-    std::vector<const char*> names;
+    std::vector<std::string> process_names;
+    std::vector<std::string> display_names;
+    std::vector<int> is_profiles_list;
 
     for(auto& i : processes)
     {
         if(!is_windowed(fetch_by_name(i.process_name)) && only_show_windowed && !fetch_profile_by_name(i.process_name).has_value())
             continue;
 
-        names.push_back(i.process_name.c_str());
+        process_names.push_back(i.process_name);
+        display_names.push_back(i.process_name);
+        is_profiles_list.push_back(0);
     }
 
-    if(imgui_current_item >= (int)names.size())
-        imgui_current_item = ((int)names.size())-1;
+    for(application_profile& i : profiles)
+    {
+        process_names.push_back(i.name);
+        display_names.push_back(i.name + " (saved)");
+        is_profiles_list.push_back(1);
+    }
+
+    if(imgui_current_item >= (int)process_names.size())
+        imgui_current_item = ((int)process_names.size())-1;
 
     if(imgui_current_item < 0)
         imgui_current_item = 0;
 
-    if(names.size() > 0)
+    std::vector<const char*> names;
+
+    for(auto& i : display_names)
     {
+        names.push_back(i.c_str());
+    }
+
+    std::string current_process_name;
+    bool is_profile = false;
+
+    if(process_names.size() > 0)
+    {
+
+        ImGui::PushItemWidth(300);
         ImGui::ListBox("###Window", &imgui_current_item, &names[0], names.size());
+
+        current_process_name = process_names[imgui_current_item];
+        is_profile = is_profiles_list[imgui_current_item];
     }
 
     ImGui::Checkbox("Only Show Windowed Applications", &only_show_windowed);
@@ -287,68 +311,48 @@ void process_manager::draw_window(int& found_w)
 
     ImGui::Checkbox("Refresh on f9", &use_f9_refresh);
 
-    if(names.size() > 0)
+    if(process_names.size() > 0)
     {
-        if(ImGui::Button("Make Windowed"))
+        if(!is_profile)
         {
-            set_bordered(fetch_by_name(names[imgui_current_item]));
+            if(ImGui::Button("Make Windowed"))
+            {
+                set_bordered(fetch_by_name(current_process_name));
 
-            last_managed_window = names[imgui_current_item];
+                last_managed_window = current_process_name;
+            }
+
+            if(ImGui::Button("Make Borderless"))
+            {
+                set_borderless(fetch_by_name(current_process_name), false);
+
+                last_managed_window = current_process_name;
+            }
+
+            if(ImGui::Button("Make Borderless, set to top left"))
+            {
+                set_borderless(fetch_by_name(current_process_name), true);
+
+                last_managed_window = current_process_name;
+            }
+
+            if(!fetch_profile_by_name(current_process_name).has_value() && ImGui::Button("Create Profile"))
+            {
+                application_profile prof;
+                prof.name = current_process_name;
+
+                profiles.push_back(prof);
+            }
         }
 
-        if(ImGui::Button("Make Borderless"))
-        {
-            set_borderless(fetch_by_name(names[imgui_current_item]), false);
-
-            last_managed_window = names[imgui_current_item];
-        }
-
-        if(ImGui::Button("Make Borderless, set to top left"))
-        {
-            set_borderless(fetch_by_name(names[imgui_current_item]), true);
-
-            last_managed_window = names[imgui_current_item];
-        }
-
-        #if 0
-        if(ImGui::Button("Make Borderless Auto"))
-        {
-            process_info info = fetch_by_name(names[imgui_current_item]);
-
-            int a1_diff = abs(info.w - dwidth);
-            int a2_diff = abs(info.h - dheight);
-
-            bool move_to_tl = a1_diff < 30 && a2_diff < 30;
-
-            std::cout << "Move? " << move_to_tl << std::endl;
-
-            set_borderless(fetch_by_name(names[imgui_current_item]), move_to_tl);
-
-            last_managed_window = names[imgui_current_item];
-
-            /*process_info new_info = process_id_to_process_info(info.processID);
-            bool move_to_tl = new_info.w == dwidth && new_info.h == dheight;
-            printf("%i %i %i %i\n", new_info.w, dwidth, new_info.h, dheight);*/
-        }
-        #endif // 0
-
-        if(!fetch_profile_by_name(names[imgui_current_item]).has_value() && ImGui::Button("Create Profile"))
-        {
-            application_profile prof;
-            prof.name = names[imgui_current_item];
-
-            profiles.push_back(prof);
-        }
-
-        if(fetch_profile_by_name(names[imgui_current_item]).has_value() && ImGui::Button("Delete Profile"))
+        if(fetch_profile_by_name(current_process_name).has_value() && ImGui::Button("Delete Profile"))
         {
             for(int i=0; i < (int)profiles.size(); i++)
             {
-                if(profiles[i].name == names[imgui_current_item])
+                if(profiles[i].name == current_process_name)
                 {
                     profiles.erase(profiles.begin() + i);
-                    i--;
-                    continue;
+                    break;
                 }
             }
         }
@@ -375,9 +379,9 @@ void process_manager::draw_window(int& found_w)
 
     bool success = false;
 
-    if(names.size() > 0)
+    if(process_names.size() > 0)
     {
-        std::optional opt_profile = fetch_profile_by_name(names[imgui_current_item]);
+        std::optional opt_profile = fetch_profile_by_name(current_process_name);
 
         if(opt_profile.has_value())
         {

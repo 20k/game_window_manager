@@ -64,19 +64,26 @@
 			<Add option="-DNET_CLIENT" />
 			<Add option="-DNO_SFML" />
 			<Add directory="deps" />
+			<Add directory="deps/imgui" />
 		</Compiler>
 		<Linker>
 			<Add option="-lpsapi" />
-			<Add option="-limgui" />
 			<Add option="-lsfml-graphics" />
 			<Add option="-lsfml-window" />
 			<Add option="-lsfml-system" />
 			<Add option="-lfreetype" />
 			<Add option="-lopengl32" />
 		</Linker>
+		<ExtraCommands>
+			<Add before="fix_build_system.bat" />
+			<Mode after="always" />
+		</ExtraCommands>
 		<Unit filename="application_profile.hpp" />
 		<Unit filename="deps/funserialisation/serialise.cpp" />
 		<Unit filename="deps/funserialisation/serialise.hpp" />
+		<Unit filename="deps/imgui-sfml/imgui-SFML.cpp" />
+		<Unit filename="deps/imgui/imgui.cpp" />
+		<Unit filename="deps/imgui/imgui_draw.cpp" />
 		<Unit filename="main.cpp" />
 		<Unit filename="process_info.hpp" />
 		<Unit filename="process_manager.cpp" />

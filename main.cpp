@@ -10,7 +10,7 @@
 
 #include <SFML/Graphics.hpp>
 #include <imgui/imgui.h>
-#include <imgui/imgui-SFML.h>
+#include <imgui-sfml/imgui-SFML.h>
 
 #include <funserialisation/serialise.hpp>
 #include "application_profile.hpp"
@@ -29,13 +29,13 @@ int main()
 
     ImGui::SFML::Init(window);
 
-    ImGui::NewFrame();
+    //ImGui::NewFrame();
 
     ImGuiStyle& style = ImGui::GetStyle();
 
     style.FrameRounding = 2;
     style.WindowRounding = 2;
-    style.ChildWindowRounding = 2;
+    style.ChildRounding = 2;
 
     process_manager process_manage;
 
@@ -63,6 +63,8 @@ int main()
     bool going = true;
 
     double frametime_s = 0;
+
+    int last_desired_w = window.getSize().x;
 
     while(going)
     {
@@ -93,6 +95,17 @@ int main()
                 window.setFramerateLimit(5);
             }
         }
+
+        if(last_desired_w > 100 && abs(last_desired_w - (int)window.getSize().x) > 10)
+        {
+            int dx = last_desired_w;
+            int dy = window.getSize().y;
+
+            window.setSize({(unsigned int)dx, (unsigned int)dy});
+            window.setView(sf::View(sf::FloatRect(0, 0, dx, dy)));
+        }
+
+        ImGui::SFML::Update(window, ui_clock.restart());
 
         frametime_s = frametime_clock.restart().asMicroseconds() / 1000. / 1000.;
 
@@ -150,25 +163,19 @@ int main()
         //process_manage.handle_mouse_lock();
         process_manage.draw_window(desired_w);
 
-        if(desired_w > 100 && abs(desired_w - (int)window.getSize().x) > 10)
-        {
-            int dx = desired_w;
-            int dy = window.getSize().y;
-
-            window.setSize({(unsigned int)dx, (unsigned int)dy});
-            window.setView(sf::View(sf::FloatRect(0, 0, dx, dy)));
-        }
+        last_desired_w = desired_w;
 
         if(process_manage.should_quit)
             going = false;
 
         //process_manage.refresh();
 
-        ImGui::Render();
+        ImGui::SFML::Render(window);
+
+        //ImGui::Render();
         window.display();
         window.clear();
 
-        ImGui::SFML::Update(ui_clock.restart());
 
         sf::sleep(sf::milliseconds(4));
     }

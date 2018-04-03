@@ -159,23 +159,16 @@ int main()
         }
 
         int desired_w = 0;
-
-        //process_manage.handle_mouse_lock();
         process_manage.draw_window(desired_w);
-
         last_desired_w = desired_w;
 
         if(process_manage.should_quit)
             going = false;
 
-        //process_manage.refresh();
-
         ImGui::SFML::Render(window);
 
-        //ImGui::Render();
         window.display();
         window.clear();
-
 
         sf::sleep(sf::milliseconds(4));
     }
